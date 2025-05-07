@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Journal</title>
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
+    
+    <style>
+        body { font-family: sans-serif; padding: 20px; max-width: 700px; margin: auto; }
+        textarea { width: 100%; height: 150px; }
+        button { margin-top: 10px; padding: 10px; }
+        .entry { margin-top: 20px; border-top: 1px solid #ccc; padding-top: 10px; }
+        .timestamp { color: gray; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+    <div id="auth">
+        <button id="signInBtn">Sign In with Google</button>
+        <button id="signOutBtn" style="display: none;">Sign Out</button>
+      </div>
+      
+      <p id="userInfo" style="margin-top: 10px;"></p>
+      
+  <h2>Journal Entry</h2>
+  <p><strong>Prompt:</strong> What shaped who you are today?</p>
+  <textarea id="journalInput" placeholder="Write your thoughts..."></textarea><br />
+  <button onclick="saveEntry()">Save Entry</button>
+
+  <h3>Your Past Entries</h3>
+  <div id="entriesContainer"></div>
+
+  <script>
+    const auth = firebase.auth();
+
+    // Sign-in
+    document.getElementById("signInBtn").onclick = () => {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider);
+    };
+
+    // Sign-out
+    document.getElementById("signOutBtn").onclick = () => {
+    auth.signOut();
+    };
+
+    // Auth state listener
+    auth.onAuthStateChanged(user => {
+    if (user) {
+        document.getElementById("signInBtn").style.display = "none";
+        document.getElementById("signOutBtn").style.display = "inline";
+        document.getElementById("userInfo").textContent = `Signed in as: ${user.displayName}`;
+        renderEntries();
+    } else {
+        document.getElementById("signInBtn").style.display = "inline";
+        document.getElementById("signOutBtn").style.display = "none";
+        document.getElementById("userInfo").textContent = "Not signed in";
+        document.getElementById("entriesContainer").innerHTML = "";
+    }
+    });
+
+    
+    // Firebase configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyBKjjulZZxd9eRAZ5ypJG0_MKxeIxZY98A",
+        authDomain: "soul-draft.firebaseapp.com",
+        projectId: "soul-draft",
+        storageBucket: "soul-draft.firebasestorage.app",
+        messagingSenderId: "570969329703",
+        appId: "1:570969329703:web:09b4d8212ab906dc23fe02",
+        measurementId: "G-4TYDQEHMP2"
+        };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    async function saveEntry() {
+        const entryText = document.getElementById("journalInput").value.trim();
+        if (!entryText || !auth.currentUser) return;
+
+        const timestamp = new Date().toLocaleString();
+        const userId = auth.currentUser.uid;
+
+        await db.collection("journalEntries").add({
+            text: entryText,
+            time: timestamp,
+            userId: userId
+        });
+
+        document.getElementById("journalInput").value = "";
+        renderEntries();
+        }
+
+    async function renderEntries() {
+    if (!auth.currentUser) return;
+
+    const userId = auth.currentUser.uid;
+    const container = document.getElementById("entriesContainer");
+
+    const snapshot = await db.collection("journalEntries")
+        .where("userId", "==", userId)
+        .orderBy("time", "desc")
+        .get();
+
+    container.innerHTML = snapshot.docs.map(doc => {
+        const entry = doc.data();
+        return `<div class="entry">
+                <div class="timestamp">${entry.time}</div>
+                <div>${entry.text}</div>
+                </div>`;
+    }).join("");
+    }
+
+    window.onload = renderEntries;
+  </script>
+
+</body>
+</html>
