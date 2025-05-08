@@ -1,19 +1,17 @@
 // components/EntryForm.jsx
-import React, { useState } from "react";
+import React from "react";
 import { db } from "../firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
-export default function EntryForm({ user }) {
-  const [text, setText] = useState("");
-
+export default function EntryForm({ user, entry, setEntry }) {
   const saveEntry = async () => {
-    if (!text.trim()) return;
+    if (!entry.trim()) return;
     await addDoc(collection(db, "journalEntries"), {
-      text,
+      text: entry,
       time: serverTimestamp(),
-      userId: user.uid
+      userId: user.uid,
     });
-    setText("");
+    setEntry(""); // Clear the entry after saving
   };
 
   return (
@@ -21,10 +19,15 @@ export default function EntryForm({ user }) {
       <textarea
         className="w-full h-36 p-2 border border-gray-300"
         placeholder="Write your thoughts..."
-        value={text}
-        onChange={(e) => setText(e.target.value)}
+        value={entry}
+        onChange={(e) => setEntry(e.target.value)}
       ></textarea>
-      <button className="mt-2 px-4 py-2 bg-blue-500 text-white" onClick={saveEntry}>Save Entry</button>
+      <button
+        className="mt-2 px-4 py-2 bg-blue-500 text-white"
+        onClick={saveEntry}
+      >
+        Save Entry
+      </button>
     </div>
   );
 }
