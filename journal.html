@@ -22,9 +22,9 @@
     <div id="auth">
         <button id="signInBtn">Sign In with Google</button>
         <button id="signOutBtn" style="display: none;">Sign Out</button>
-      </div>
+    </div>
       
-      <p id="userInfo" style="margin-top: 10px;"></p>
+    <p id="userInfo" style="margin-top: 10px;"></p>
       
   <h2>Journal Entry</h2>
   <p><strong>Prompt:</strong> What shaped who you are today?</p>
@@ -35,6 +35,19 @@
   <div id="entriesContainer"></div>
 
   <script>
+    // Firebase configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyBKjjulZZxd9eRAZ5ypJG0_MKxeIxZY98A",
+        authDomain: "soul-draft.firebaseapp.com",
+        projectId: "soul-draft",
+        storageBucket: "soul-draft.firebasestorage.app",
+        messagingSenderId: "570969329703",
+        appId: "1:570969329703:web:09b4d8212ab906dc23fe02",
+        measurementId: "G-4TYDQEHMP2"
+        };
+
+    firebase.initializeApp(firebaseConfig);
+    
     const auth = firebase.auth();
 
     // Sign-in
@@ -64,18 +77,6 @@
     });
 
     
-    // Firebase configuration
-    const firebaseConfig = {
-        apiKey: "AIzaSyBKjjulZZxd9eRAZ5ypJG0_MKxeIxZY98A",
-        authDomain: "soul-draft.firebaseapp.com",
-        projectId: "soul-draft",
-        storageBucket: "soul-draft.firebasestorage.app",
-        messagingSenderId: "570969329703",
-        appId: "1:570969329703:web:09b4d8212ab906dc23fe02",
-        measurementId: "G-4TYDQEHMP2"
-        };
-
-    firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
     async function saveEntry() {
@@ -93,26 +94,26 @@
 
         document.getElementById("journalInput").value = "";
         renderEntries();
-        }
+    }
 
     async function renderEntries() {
-    if (!auth.currentUser) return;
+        if (!auth.currentUser) return;
 
-    const userId = auth.currentUser.uid;
-    const container = document.getElementById("entriesContainer");
+        const userId = auth.currentUser.uid;
+        const container = document.getElementById("entriesContainer");
 
-    const snapshot = await db.collection("journalEntries")
-        .where("userId", "==", userId)
-        .orderBy("time", "desc")
-        .get();
+        const snapshot = await db.collection("journalEntries")
+            .where("userId", "==", userId)
+            .orderBy("time", "desc")
+            .get();
 
-    container.innerHTML = snapshot.docs.map(doc => {
-        const entry = doc.data();
-        return `<div class="entry">
-                <div class="timestamp">${entry.time}</div>
-                <div>${entry.text}</div>
-                </div>`;
-    }).join("");
+        container.innerHTML = snapshot.docs.map(doc => {
+            const entry = doc.data();
+            return `<div class="entry">
+                    <div class="timestamp">${entry.time}</div>
+                    <div>${entry.text}</div>
+                    </div>`;
+        }).join("");
     }
 
     window.onload = renderEntries;
