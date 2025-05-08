@@ -1,17 +1,16 @@
 // components/EntryForm.jsx
 import React, { useState } from "react";
 import { db } from "../firebase";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 export default function EntryForm({ user }) {
   const [text, setText] = useState("");
 
   const saveEntry = async () => {
     if (!text.trim()) return;
-    const timestamp = new Date().toLocaleString();
     await addDoc(collection(db, "journalEntries"), {
       text,
-      time: timestamp,
+      time: serverTimestamp(),
       userId: user.uid
     });
     setText("");
