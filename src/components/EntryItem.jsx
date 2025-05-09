@@ -10,6 +10,10 @@ export default function EntryItem({ entry }) {
           : entry.time || "Saving..."}
       </div>
       <div>{entry.text}</div>
+
+      <p className="text-sm italic text-gray-500">
+        🧠 Insight: {entry.identityNode?.label} ({entry.identityNode?.type})
+      </p>
     </div>
   );
 }

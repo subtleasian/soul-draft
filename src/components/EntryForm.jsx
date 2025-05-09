@@ -1,8 +1,8 @@
 // components/EntryForm.jsx
 import React, { useState } from "react";
 import { db } from "../firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { doc, setDoc, updateDoc } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, doc, updateDoc } from "firebase/firestore";
+import { saveIdentityNode } from "../utils/firestore";
 
 export default function EntryForm({ user, entry, setEntry }) {
   const [extractedNodes, setExtractedNodes] = useState([]);
@@ -19,7 +19,6 @@ export default function EntryForm({ user, entry, setEntry }) {
         userId: user.uid,
       });
 
-      // Call identity extraction API
       const response = await fetch("https://extractidentitynodes-d5g54wgdxq-uc.a.run.app", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -29,26 +28,25 @@ export default function EntryForm({ user, entry, setEntry }) {
       const data = await response.json();
       setExtractedNodes(data.identityNodes);
 
-
-
       data.identityNodes.forEach(async (node, index) => {
-        const nodeId = `${journalRef.id}_${index}`; // or use crypto.randomUUID() if preferred
-        await setDoc(doc(db, "identityNodes", nodeId), {
+        const nodeId = `${journalRef.id}_${index}`;
+        await saveIdentityNode({
           ...node,
           userId: user.uid,
           journalEntryId: journalRef.id,
           createdAt: new Date(),
           updatedAt: new Date(),
-          status: node.confidence >= 0.75
-            ? "confirmed"
-            : node.confidence >= 0.4
-            ? "suggested"
-            : "dismissed",
+          status:
+            node.confidence >= 0.75
+              ? "confirmed"
+              : node.confidence >= 0.4
+              ? "suggested"
+              : "dismissed",
           reviewedByUser: false,
-        });
+        }, nodeId);
       });
 
-      setEntry(""); // Clear entry
+      setEntry("");
     } catch (err) {
       console.error("Error saving entry or extracting nodes:", err);
     } finally {
@@ -58,19 +56,17 @@ export default function EntryForm({ user, entry, setEntry }) {
 
   const handleNodeReview = async (index, action) => {
     const newStatus = action === "confirm" ? "confirmed" : "dismissed";
-    
+
     const updatedNode = {
       ...extractedNodes[index],
       status: newStatus,
       reviewedByUser: true,
     };
-  
-    
+
     setExtractedNodes((prev) =>
       prev.map((node, i) => (i === index ? updatedNode : node))
     );
-  
-    // Save the review status to Firestore (optional if already saved)
+
     try {
       const nodeId = `${updatedNode.origin?.journalEntryId || "manual"}_${index}`;
       await updateDoc(doc(db, "identityNodes", nodeId), {
@@ -82,8 +78,6 @@ export default function EntryForm({ user, entry, setEntry }) {
       console.error("Failed to update node:", error);
     }
   };
-  
-  
 
   return (
     <div>
@@ -131,7 +125,6 @@ export default function EntryForm({ user, entry, setEntry }) {
               )}
             </div>
           ))}
-
         </div>
       )}
     </div>
