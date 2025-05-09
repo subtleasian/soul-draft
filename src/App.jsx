@@ -1,3 +1,4 @@
+
 // src/App.jsx
 import React, { useEffect, useState } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
@@ -20,6 +21,7 @@ export default function App() {
 
   return (
     <Router>
+      <div className="text-red-500 font-bold text-2xl">Tailwind is working</div>
       <Layout>
         <Auth user={user} />
         <UserInfo user={user} />
@@ -31,3 +33,5 @@ export default function App() {
     </Router>
   );
 }
+
+

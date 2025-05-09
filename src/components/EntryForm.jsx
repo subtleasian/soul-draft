@@ -1,34 +1,41 @@
-// components/EntryForm.jsx
 import React, { useState } from "react";
 import { db } from "../firebase";
-import { collection, addDoc, serverTimestamp, doc, updateDoc } from "firebase/firestore";
+import {
+  collection,
+  addDoc,
+  serverTimestamp,
+  doc,
+  updateDoc
+} from "firebase/firestore";
 import { saveIdentityNode } from "../utils/firestore";
+import { useIdentityNodeExtractor } from "../hooks/useIdentityNodeExtractor";
+import JournalTextarea from "./JournalTextarea";
+import ExtractedNodesList from "./ExtractedNodesList";
 
 export default function EntryForm({ user, entry, setEntry }) {
   const [extractedNodes, setExtractedNodes] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const { extractNodes, loading: extracting, error } = useIdentityNodeExtractor();
 
   const saveEntry = async () => {
     if (!entry.trim()) return;
-    setLoading(true);
+    setSaving(true);
 
     try {
+      // Step 1: Save raw journal entry
       const journalRef = await addDoc(collection(db, "journalEntries"), {
         text: entry,
         time: serverTimestamp(),
-        userId: user.uid,
+        userId: user.uid
       });
 
-      const response = await fetch("https://extractidentitynodes-d5g54wgdxq-uc.a.run.app", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ journalText: entry }),
-      });
+      // Step 2: Extract identity nodes via API
+      const nodes = await extractNodes(entry);
+      setExtractedNodes(nodes);
 
-      const data = await response.json();
-      setExtractedNodes(data.identityNodes);
-
-      data.identityNodes.forEach(async (node, index) => {
+      // Step 3: Save each identity node
+      await Promise.all(nodes.map(async (node, index) => {
         const nodeId = `${journalRef.id}_${index}`;
         await saveIdentityNode({
           ...node,
@@ -42,15 +49,15 @@ export default function EntryForm({ user, entry, setEntry }) {
               : node.confidence >= 0.4
               ? "suggested"
               : "dismissed",
-          reviewedByUser: false,
+          reviewedByUser: false
         }, nodeId);
-      });
+      }));
 
       setEntry("");
     } catch (err) {
-      console.error("Error saving entry or extracting nodes:", err);
+      console.error("Error saving entry or processing nodes:", err);
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
@@ -60,7 +67,7 @@ export default function EntryForm({ user, entry, setEntry }) {
     const updatedNode = {
       ...extractedNodes[index],
       status: newStatus,
-      reviewedByUser: true,
+      reviewedByUser: true
     };
 
     setExtractedNodes((prev) =>
@@ -72,7 +79,7 @@ export default function EntryForm({ user, entry, setEntry }) {
       await updateDoc(doc(db, "identityNodes", nodeId), {
         status: newStatus,
         reviewedByUser: true,
-        updatedAt: new Date(),
+        updatedAt: new Date()
       });
     } catch (error) {
       console.error("Failed to update node:", error);
@@ -81,52 +88,18 @@ export default function EntryForm({ user, entry, setEntry }) {
 
   return (
     <div>
-      <textarea
-        className="w-full h-36 p-2 border border-gray-300"
-        placeholder="Write your thoughts..."
-        value={entry}
-        onChange={(e) => setEntry(e.target.value)}
-      ></textarea>
-      <button
-        className="mt-2 px-4 py-2 bg-blue-500 text-white"
-        onClick={saveEntry}
-        disabled={loading}
-      >
-        {loading ? "Saving..." : "Save Entry"}
-      </button>
+      <JournalTextarea
+        entry={entry}
+        setEntry={setEntry}
+        onSave={saveEntry}
+        loading={saving || extracting}
+      />
+
+      {error && <p className="text-red-500 mt-2">⚠️ Failed to extract identity nodes.</p>}
 
       {extractedNodes.length > 0 && (
-        <div className="mt-4 space-y-2">
-          <h3 className="font-semibold">Extracted Identity Nodes</h3>
-          {extractedNodes.map((node, idx) => (
-            <div key={idx} className="p-2 rounded bg-gray-100">
-              <p><strong>{node.label}</strong> <em>({node.type}, {node.category})</em></p>
-              <p className="text-sm text-gray-600">Confidence: {(node.confidence * 100).toFixed(1)}%</p>
-
-              {node.reviewedByUser ? (
-                <p className="text-green-600 text-sm mt-1">
-                  You {node.status === "confirmed" ? "confirmed" : "dismissed"} this.
-                </p>
-              ) : (
-                <div className="flex gap-2 mt-2">
-                  <button
-                    onClick={() => handleNodeReview(idx, "confirm")}
-                    className="px-2 py-1 bg-green-500 text-white text-sm rounded"
-                  >
-                    Confirm
-                  </button>
-                  <button
-                    onClick={() => handleNodeReview(idx, "dismiss")}
-                    className="px-2 py-1 bg-red-500 text-white text-sm rounded"
-                  >
-                    Dismiss
-                  </button>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+        <ExtractedNodesList nodes={extractedNodes} onReview={handleNodeReview} />
       )}
     </div>
   );
-};
+}

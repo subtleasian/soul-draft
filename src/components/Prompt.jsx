@@ -1,8 +1,12 @@
 import React, { useState } from "react";
-import { generateConversationFlowTemplate, inferIdentityTraitsFromInput } from "../utils/conversationUtils";
+import {
+  generateConversationFlowTemplate,
+  inferIdentityTraitsFromInput,
+} from "../utils/conversationUtils";
 import { saveIdentityNode } from "../utils/firestore";
+import { updateUserProgress } from "../utils/updateUserProgress";
 
-export default function Prompt({ prompt }) {
+export default function Prompt({ prompt, user }) {
   const [selectedOption, setSelectedOption] = useState(null);
   const [conversationFlow, setConversationFlow] = useState(null);
   const [showReflection, setShowReflection] = useState(false);
@@ -19,38 +23,64 @@ export default function Prompt({ prompt }) {
     setUserReflection("");
     setSubmitted(false);
 
+    const traits = { inferredTrait: "", inferredTheme: "" }; // don’t guess yet
+    // const traits = inferIdentityTraitsFromInput("", option);
     const flow =
       prompt.conversationFlows?.[option] ||
       generateConversationFlowTemplate({
         selectedOption: option,
-        ...inferIdentityTraitsFromInput("", option)
+        ...traits,
       });
 
     setConversationFlow(flow);
   };
 
+  const handleStartReflection = () => {
+    setShowReflection(true);
+  };
+
   const handleSubmit = async () => {
-    const { inferredTrait, inferredTheme, dominantEmotion } = inferIdentityTraitsFromInput(
+    console.log("Submitting insight:", {
+      selectedOption,
       userReflection,
-      selectedOption
-    );
+      showReflection,
+    });
+
+    if (!selectedOption || !showReflection) return;
+    if (!userReflection || userReflection.trim().length < 3) {
+      alert("Please write a bit more to save your insight.");
+      return;
+    }
+
+    const { inferredTrait, inferredTheme, dominantEmotion } =
+      inferIdentityTraitsFromInput(userReflection, selectedOption) || {};
 
     const identityNode = {
-      label: selectedOption,
-      type: prompt.type === "multipleChoice" ? "belief" : "value",
+      userId: user.uid,
+      label: selectedOption, // this repeats in origin, find a different label?
+      type: prompt.type === "multipleChoice" ? "belief" : "value", //find a way to fix this
       category: "Self",
       confidence: 0.9,
       origin: {
+        promptText: prompt.text,
+        selectedOption: selectedOption,
         excerpt: `${prompt.text} → ${selectedOption}`,
         reflection: userReflection
       },
-      status: "confirmed",
+      status: "",
       reviewedByUser: true,
       createdAt: new Date(),
       updatedAt: new Date()
     };
 
+
+    if (inferredTrait) identityNode.trait = inferredTrait;
+    if (inferredTheme) identityNode.theme = inferredTheme;
+    if (dominantEmotion) identityNode.emotion = dominantEmotion;
+
     await saveIdentityNode(identityNode);
+    if (user?.uid) await updateUserProgress(user.uid, identityNode);
+
     setSubmitted(true);
   };
 
@@ -79,7 +109,7 @@ export default function Prompt({ prompt }) {
           {!showReflection ? (
             <button
               className="text-blue-600 underline"
-              onClick={() => setShowReflection(true)}
+              onClick={handleStartReflection}
             >
               {conversationFlow.reflectionPrompt}
             </button>
@@ -101,55 +131,20 @@ export default function Prompt({ prompt }) {
             </>
           )}
 
-          {!userReflection && (
-            <p className="text-sm text-gray-500">{conversationFlow.followUpIfSkipped}</p>
+          {!userReflection && showReflection && (
+            <p className="text-sm text-gray-500">
+              {conversationFlow.followUpIfSkipped}
+            </p>
           )}
 
-          {submitted && <p className="text-green-600">✅ Insight saved to your map.</p>}
+          {submitted && (
+            <p className="text-green-600">✅ Insight saved to your map.</p>
+          )}
         </div>
       )}
     </div>
   );
 }
-// Compare this snippet from src/utils/conversationUtils.js:
-// // src/utils/conversationUtils.js
-// import { v4 as uuidv4 } from "uuid";
-//
-// export function generateConversationFlowTemplate({ selectedOption, inferredTrait, inferredTheme }) {
-//   return {
-//     acknowledgment: `That’s a meaningful choice. Thanks for naming something like "${selectedOption}".`,
-//     reflectionPrompt: `Want to share what "${selectedOption}" looked like for you?`,
-//     followUpIfSkipped: `No pressure. Want help naming what "${selectedOption}" might have shaped in you?`,
-//     insightTemplate: `This may have shaped your ${inferredTrait} or your relationship with ${inferredTheme}.`,
-//     timeCheckPrompt: `Pause here or go one layer deeper into your ${inferredTrait}?`
-//     id: uuidv4(), // Unique ID for the flow
-//     createdAt: new Date(),
-//     updatedAt: new Date(),
-//   };
-// }
-//
-// export function inferIdentityTraitsFromInput(userText = "", selectedOption = "") {
-//   const lowerText = userText.toLowerCase();
-//   const inferredTrait = lowerText.includes("resilience") ? "resilience" : "curiosity";
-//   const inferredTheme = lowerText.includes("belonging") ? "belonging" : "connection";
-//   return { inferredTrait, inferredTheme };
-// }
-//
-// export function saveIdentityNode(identityNode) {
-//   // Function to save the identity node to the database
-//   // This is a placeholder and should be replaced with actual database logic
-//   console.log("Saving identity node:", identityNode);
-//   return new Promise((resolve) => {
-//     setTimeout(() => {
-//       console.log("Identity node saved!");
-//       resolve();
-//     }, 1000);
-//   });
-//   // In a real application, you would use Firestore or another database to save the node
-//   // For example:
-//   // return db.collection("identityNodes").add(identityNode);
-// }
-//
-// export function fetchPrompts() {
-//   // Function to fetch prompts from the database
-//   // This is a placeholder and should be replaced with actual database logi
+// Note: The above code assumes that the `inferIdentityTraitsFromInput` function
+// is capable of inferring traits, themes, and emotions from the user's reflection.
+// You may need to adjust the logic based on your actual implementation.

@@ -1,0 +1,148 @@
+[
+  {
+    "text": "Which of these life themes shaped you the most growing up?",
+    "type": "multipleChoice",
+    "options": [
+      "Loss or heartbreak",
+      "Pressure to succeed",
+      "Family chaos",
+      "Spiritual/religious influence",
+      "Hiding parts of yourself",
+      "Intellectual curiosity",
+      "Feeling like an outsider",
+      "Moving a lot / no roots"
+    ],
+    "tags": [
+      "belief",
+      "trait",
+      "identity",
+      "roots"
+    ],
+    "order": 1,
+    "category": "Self",
+    "insightType": "belief",
+    "conversationFlow": {
+      "acknowledgment": "Thanks for choosing that. Which of these life themes shaped you the most growing up sounds like it shaped you in a real way.",
+      "reflectionPrompt": "Want to share what which of these life themes shaped you the most growing up looked like for you?",
+      "followUpIfSkipped": "No pressure \u2014 want me to help name what which of these life themes shaped you the most growing up may have taught you?",
+      "insightTemplate": "This experience may have shaped how you {effect} or your sensitivity to {theme}.",
+      "timeCheckPrompt": "Want to pause here or go one level deeper?"
+    }
+  },
+  {
+    "text": "Which experience changed how you see the world?",
+    "type": "multipleChoice",
+    "options": [
+      "Traveling somewhere far from home",
+      "Going through something painful",
+      "Meeting someone who challenged your thinking",
+      "Failing at something important",
+      "A spiritual or existential moment",
+      "Being deeply misunderstood",
+      "Learning something surprising about yourself",
+      "Walking away from something you once wanted"
+    ],
+    "tags": [
+      "belief",
+      "self-awareness"
+    ],
+    "order": 2,
+    "category": "Self",
+    "insightType": "avoidance",
+    "conversationFlow": {
+      "acknowledgment": "Thanks for choosing that. Which experience changed how you see the world sounds like it shaped you in a real way.",
+      "reflectionPrompt": "Want to share what which experience changed how you see the world looked like for you?",
+      "followUpIfSkipped": "No pressure \u2014 want me to help name what which experience changed how you see the world may have taught you?",
+      "insightTemplate": "This experience may have shaped how you {effect} or your sensitivity to {theme}.",
+      "timeCheckPrompt": "Want to pause here or go one level deeper?"
+    }
+  },
+  {
+    "text": "What kind of emotional wound has shaped you most?",
+    "type": "multipleChoice",
+    "options": [
+      "Feeling emotionally neglected",
+      "Being told you were \u201ctoo much\u201d",
+      "Always having to be the strong one",
+      "Being afraid to speak your truth",
+      "Loving someone who couldn\u2019t love you back",
+      "Trying to fill an inner emptiness",
+      "Not being protected when you needed it",
+      "Repeating patterns you promised to break"
+    ],
+    "tags": [
+      "tension",
+      "emotion",
+      "emotional core"
+    ],
+    "order": 3,
+    "category": "Emotion",
+    "insightType": "emotion",
+    "conversationFlow": {
+      "acknowledgment": "Thanks for choosing that. What kind of emotional wound has shaped you most sounds like it shaped you in a real way.",
+      "reflectionPrompt": "Want to share what what kind of emotional wound has shaped you most looked like for you?",
+      "followUpIfSkipped": "No pressure \u2014 want me to help name what what kind of emotional wound has shaped you most may have taught you?",
+      "insightTemplate": "This experience may have shaped how you {effect} or your sensitivity to {theme}.",
+      "timeCheckPrompt": "Want to pause here or go one level deeper?"
+    }
+  },
+  {
+    "text": "Which of these childhood roles did you play most often?",
+    "type": "multipleChoice",
+    "options": [
+      "The performer (funny, charming, the distraction)",
+      "The caretaker (always helping or fixing)",
+      "The achiever (driven, perfect on paper)",
+      "The invisible one (quiet, out of the way)",
+      "The protector (keeping it all together)",
+      "The observer (watching everything closely)",
+      "The rebel (breaking the rules)",
+      "The scapegoat (blamed or misunderstood)"
+    ],
+    "tags": [
+      "trait",
+      "identity",
+      "roots",
+      "inner child"
+    ],
+    "order": 4,
+    "category": "Self",
+    "insightType": "pattern",
+    "conversationFlow": {
+      "acknowledgment": "Thanks for choosing that. Which of these childhood roles did you play most often sounds like it shaped you in a real way.",
+      "reflectionPrompt": "Want to share what which of these childhood roles did you play most often looked like for you?",
+      "followUpIfSkipped": "No pressure \u2014 want me to help name what which of these childhood roles did you play most often may have taught you?",
+      "insightTemplate": "This experience may have shaped how you {effect} or your sensitivity to {theme}.",
+      "timeCheckPrompt": "Want to pause here or go one level deeper?"
+    }
+  },
+  {
+    "text": "Which of these moments felt like a turning point in your life?",
+    "type": "multipleChoice",
+    "options": [
+      "Writing or speaking your truth for the first time",
+      "Leaving a place or person behind",
+      "Starting over in a new environment",
+      "A moment of clarity or surrender",
+      "Breaking a family or personal pattern",
+      "Choosing yourself over someone else",
+      "Saying yes to something terrifying",
+      "Hearing words that changed everything"
+    ],
+    "tags": [
+      "belief",
+      "goal",
+      "storyline shift"
+    ],
+    "order": 5,
+    "category": "Purpose",
+    "insightType": "belief",
+    "conversationFlow": {
+      "acknowledgment": "Thanks for choosing that. Which of these moments felt like a turning point in your life sounds like it shaped you in a real way.",
+      "reflectionPrompt": "Want to share what which of these moments felt like a turning point in your life looked like for you?",
+      "followUpIfSkipped": "No pressure \u2014 want me to help name what which of these moments felt like a turning point in your life may have taught you?",
+      "insightTemplate": "This experience may have shaped how you {effect} or your sensitivity to {theme}.",
+      "timeCheckPrompt": "Want to pause here or go one level deeper?"
+    }
+  }
+]
