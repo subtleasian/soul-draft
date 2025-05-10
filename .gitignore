@@ -19,6 +19,8 @@
 .env.production.local
 .env
 serviceAccountKey.json
+*.env
+*serviceAccountKey*.json
 
 
 npm-debug.log*
