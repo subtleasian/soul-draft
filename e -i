@@ -1,0 +1,78 @@
+[33mcommit 75399d34fd4a9c7030b18b972677bef2cef26f8c[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m
+Author: Daniel Son <danielmson21@gmail.com>
+Date:   Fri May 9 19:50:51 2025 -0400
+
+    big update
+
+[33mcommit de1764eb7df6a324e4476c22c0c0973eeb64dfa9[m
+Author: Daniel Son <danielmson21@gmail.com>
+Date:   Fri May 9 12:34:41 2025 -0400
+
+    added tabs Guided Prompt and Free Journal
+
+[33mcommit 94dcd917d2e182d6f8d9eb6c4045aa424e9bc30a[m
+Author: Daniel Son <danielmson21@gmail.com>
+Date:   Fri May 9 12:33:04 2025 -0400
+
+    cleanup and working tabs for guided prompt and free journal
+
+[33mcommit 04457d5688a0634fc3885d2b78c7d465d1ee8cc3[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: Daniel Son <danielmson21@gmail.com>
+Date:   Thu May 8 13:07:09 2025 -0400
+
+    added logic around displaying nodes
+
+[33mcommit 8bc56df016f6b8b24b6f443c815682d5ee0e02af[m
+Author: Daniel Son <danielmson21@gmail.com>
+Date:   Thu May 8 07:54:02 2025 -0400
+
+    updated backend to have OpenAI API connection and successfully received JSON in response to extractIdentityNode
+
+[33mcommit 955a6149d8043ae8740f2d8efbda80f74dbdc3b1[m
+Author: Daniel Son <danielmson21@gmail.com>
+Date:   Thu May 8 01:16:50 2025 -0400
+
+    fixed login issue. fixed issue where journal entries wouldn't save automagically.
+
+[33mcommit 2c0b330943f586bbddc02625955301801b4033d6[m
+Author: Daniel Son <danielmson21@gmail.com>
+Date:   Thu May 8 00:33:45 2025 -0400
+
+    changed to React framework
+
+[33mcommit 15bc7c3563301945d52ff6aa3e405cd130d5357e[m
+Author: Daniel Son <danielmson21@gmail.com>
+Date:   Wed May 7 23:48:54 2025 -0400
+
+    added auth that works now.
+
+[33mcommit 3fbc264ec5a2741658673320cb2a36c9619d03bb[m
+Author: Daniel Son <danielmson21@gmail.com>
+Date:   Wed May 7 23:23:06 2025 -0400
+
+    added journal html
+
+[33mcommit 9c4fce817eba54750be00c9f091adc5019f18008[m
+Author: Daniel Son <danielmson21@gmail.com>
+Date:   Wed May 7 15:30:32 2025 -0400
+
+    added journal stuff, need to finish auth
+
+[33mcommit 51fccd47c4c8748f6c7a58f80c7ae5ac6eb6222e[m
+Merge: 3e69377 5b5cd45
+Author: Daniel Son <danielmson21@gmail.com>
+Date:   Wed May 7 14:29:30 2025 -0400
+
+    Resolved merge conflict in README.md
+
+[33mcommit 3e693775ff5e737c19cfdc0606cdf172f7cf47b9[m
+Author: Daniel Son <dson@edgeconnex.com>
+Date:   Wed May 7 14:15:13 2025 -0400
+
+    Initialize project using Create React App
+
+[33mcommit 5b5cd4527a981feb60682102f201e177c729c575[m
+Author: Daniel Son <56944138+subtleasian@users.noreply.github.com>
+Date:   Wed May 7 13:51:57 2025 -0400
+
+    Initial commit
