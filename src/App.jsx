@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "./firebase";
+import { auth } from "./firebase/firebase";
 
 import Layout from "./components/Layout";
 import Auth from "./components/Auth";
@@ -21,7 +21,6 @@ export default function App() {
 
   return (
     <Router>
-      <div className="text-red-500 font-bold text-2xl">Tailwind is working</div>
       <Layout>
         <Auth user={user} />
         <UserInfo user={user} />

@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import {
   generateConversationFlowTemplate,
-  inferIdentityTraitsFromInput,
+  inferIdentityTraitsFromInput
 } from "../utils/conversationUtils";
-import { saveIdentityNode } from "../utils/firestore";
 import { updateUserProgress } from "../utils/updateUserProgress";
+import { useIdentityNodeExtractor } from "../hooks/useIdentityNodeExtractor";
 
 export default function Prompt({ prompt, user }) {
   const [selectedOption, setSelectedOption] = useState(null);
@@ -12,6 +12,8 @@ export default function Prompt({ prompt, user }) {
   const [showReflection, setShowReflection] = useState(false);
   const [userReflection, setUserReflection] = useState("");
   const [submitted, setSubmitted] = useState(false);
+
+  const { extractNodes, loading, error } = useIdentityNodeExtractor();
 
   if (!prompt || !Array.isArray(prompt.options)) {
     return <div className="text-red-600">⚠️ Prompt data missing or invalid.</div>;
@@ -23,13 +25,12 @@ export default function Prompt({ prompt, user }) {
     setUserReflection("");
     setSubmitted(false);
 
-    const traits = { inferredTrait: "", inferredTheme: "" }; // don’t guess yet
-    // const traits = inferIdentityTraitsFromInput("", option);
+    const traits = { inferredTrait: "", inferredTheme: "" }; // placeholder
     const flow =
       prompt.conversationFlows?.[option] ||
       generateConversationFlowTemplate({
         selectedOption: option,
-        ...traits,
+        ...traits
       });
 
     setConversationFlow(flow);
@@ -43,43 +44,29 @@ export default function Prompt({ prompt, user }) {
     console.log("Submitting insight:", {
       selectedOption,
       userReflection,
-      showReflection,
+      showReflection
     });
 
     if (!selectedOption || !showReflection) return;
+
     if (!userReflection || userReflection.trim().length < 3) {
       alert("Please write a bit more to save your insight.");
       return;
     }
 
-    const { inferredTrait, inferredTheme, dominantEmotion } =
-      inferIdentityTraitsFromInput(userReflection, selectedOption) || {};
+    const journalEntryId = `${prompt.id || prompt.text?.slice(0, 10)}-${Date.now()}`;
 
-    const identityNode = {
-      userId: user.uid,
-      label: selectedOption, // this repeats in origin, find a different label?
-      type: prompt.type === "multipleChoice" ? "belief" : "value", //find a way to fix this
-      category: "Self",
-      confidence: 0.9,
-      origin: {
-        promptText: prompt.text,
-        selectedOption: selectedOption,
-        excerpt: `${prompt.text} → ${selectedOption}`,
-        reflection: userReflection
-      },
-      status: "",
-      reviewedByUser: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
+    const nodes = await extractNodes({
+      journalText: prompt.text,
+      userReflection,
+      journalEntryId,
+      selectedOption,
+      userId: user.uid
+    });
 
-
-    if (inferredTrait) identityNode.trait = inferredTrait;
-    if (inferredTheme) identityNode.theme = inferredTheme;
-    if (dominantEmotion) identityNode.emotion = dominantEmotion;
-
-    await saveIdentityNode(identityNode);
-    if (user?.uid) await updateUserProgress(user.uid, identityNode);
+    for (const node of nodes) {
+      await updateUserProgress(user.uid, node);
+    }
 
     setSubmitted(true);
   };
@@ -125,12 +112,19 @@ export default function Prompt({ prompt, user }) {
               <button
                 className="mt-2 px-4 py-2 bg-blue-600 text-white rounded"
                 onClick={handleSubmit}
+                disabled={loading}
               >
-                Save Insight
+                {loading ? "Saving..." : "Save Insight"}
               </button>
             </>
           )}
 
+          {loading && (
+            <p className="text-sm text-gray-500">⏳ Extracting and saving insight…</p>
+          )}
+          {error && (
+            <p className="text-sm text-red-500">⚠️ Something went wrong. Please try again.</p>
+          )}
           {!userReflection && showReflection && (
             <p className="text-sm text-gray-500">
               {conversationFlow.followUpIfSkipped}
@@ -145,6 +139,3 @@ export default function Prompt({ prompt, user }) {
     </div>
   );
 }
-// Note: The above code assumes that the `inferIdentityTraitsFromInput` function
-// is capable of inferring traits, themes, and emotions from the user's reflection.
-// You may need to adjust the logic based on your actual implementation.

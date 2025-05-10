@@ -1,30 +1,36 @@
-// hooks/useIdentityNodeExtractor.js
 import { useState } from "react";
+import { extractIdentityNodes } from "../api/extractIdentityNodes";
+import { saveIdentityNode } from "../firebase/saveIdentityNode";
 
 export function useIdentityNodeExtractor() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const extractNodes = async (journalText) => {
+  const extractNodes = async ({
+    journalText,
+    userReflection = "",
+    journalEntryId = "",
+    selectedOption = "",
+    userId
+  }) => {
     setLoading(true);
     setError(null);
 
     try {
-      const response = await fetch("https://extractidentitynodes-d5g54wgdxq-uc.a.run.app", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ journalText })
-      });
+      const nodes = await extractIdentityNodes(
+        journalText,
+        userReflection,
+        journalEntryId,
+        selectedOption,
+        userId
+      );
 
-      const data = await response.json();
+      // Save each node to Firestore
+      await Promise.all(nodes.map(saveIdentityNode));
 
-      if (!data.identityNodes) {
-        throw new Error("Invalid response format");
-      }
-
-      return data.identityNodes;
+      return nodes; // You may still want to return them for UI purposes
     } catch (err) {
-      console.error("Error extracting identity nodes:", err);
+      console.error("Error extracting or saving identity nodes:", err);
       setError(err);
       return [];
     } finally {

@@ -1,5 +1,5 @@
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
-import { db } from "../firebase";
+import { db } from "../firebase/firebase";
 
 export async function updateUserProgress(userId, identityNode) {
   const userDocRef = doc(db, "userProgress", userId);

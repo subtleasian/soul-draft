@@ -1,6 +1,6 @@
 // components/Auth.jsx
 import React from "react";
-import { auth, provider } from "../firebase";
+import { auth, provider } from "../firebase/firebase";
 import { signInWithPopup, signInWithRedirect, signOut } from "firebase/auth";
 
 export default function Auth({ user }) {

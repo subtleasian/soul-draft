@@ -1,5 +1,5 @@
 // src/utils/firestore.js
-import { db } from "../firebase";
+import { db } from "../firebase/firebase";
 import { collection, addDoc, doc, setDoc, updateDoc, getDocs } from "firebase/firestore";
 
 // Save a new identity node to Firestore

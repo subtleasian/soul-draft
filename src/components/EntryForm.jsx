@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { db } from "../firebase";
+import { db } from "../firebase/firebase";
 import {
   collection,
   addDoc,
@@ -8,34 +8,37 @@ import {
   updateDoc
 } from "firebase/firestore";
 import { saveIdentityNode } from "../utils/firestore";
-import { useIdentityNodeExtractor } from "../hooks/useIdentityNodeExtractor";
 import JournalTextarea from "./JournalTextarea";
 import ExtractedNodesList from "./ExtractedNodesList";
+import { useIdentityNodeExtractor } from "../hooks/useIdentityNodeExtractor";
+
+
 
 export default function EntryForm({ user, entry, setEntry }) {
   const [extractedNodes, setExtractedNodes] = useState([]);
-  const [saving, setSaving] = useState(false);
-
-  const { extractNodes, loading: extracting, error } = useIdentityNodeExtractor();
+  const [loading, setLoading] = useState(false);
 
   const saveEntry = async () => {
     if (!entry.trim()) return;
-    setSaving(true);
+    setLoading(true);
 
     try {
-      // Step 1: Save raw journal entry
       const journalRef = await addDoc(collection(db, "journalEntries"), {
         text: entry,
         time: serverTimestamp(),
         userId: user.uid
       });
 
-      // Step 2: Extract identity nodes via API
-      const nodes = await extractNodes(entry);
-      setExtractedNodes(nodes);
+      const response = await fetch("https://extractidentitynodes-d5g54wgdxq-uc.a.run.app", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ journalText: entry })
+      });
 
-      // Step 3: Save each identity node
-      await Promise.all(nodes.map(async (node, index) => {
+      const data = await response.json();
+      setExtractedNodes(data.identityNodes);
+
+      data.identityNodes.forEach(async (node, index) => {
         const nodeId = `${journalRef.id}_${index}`;
         await saveIdentityNode({
           ...node,
@@ -51,13 +54,13 @@ export default function EntryForm({ user, entry, setEntry }) {
               : "dismissed",
           reviewedByUser: false
         }, nodeId);
-      }));
+      });
 
       setEntry("");
     } catch (err) {
-      console.error("Error saving entry or processing nodes:", err);
+      console.error("Error saving entry or extracting nodes:", err);
     } finally {
-      setSaving(false);
+      setLoading(false);
     }
   };
 
@@ -92,10 +95,8 @@ export default function EntryForm({ user, entry, setEntry }) {
         entry={entry}
         setEntry={setEntry}
         onSave={saveEntry}
-        loading={saving || extracting}
+        loading={loading}
       />
-
-      {error && <p className="text-red-500 mt-2">⚠️ Failed to extract identity nodes.</p>}
 
       {extractedNodes.length > 0 && (
         <ExtractedNodesList nodes={extractedNodes} onReview={handleNodeReview} />

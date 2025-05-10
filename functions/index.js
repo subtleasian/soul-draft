@@ -1,12 +1,7 @@
-require("dotenv").config();
-
+require("dotenv").config(); // Load env variables
 const functions = require("firebase-functions");
 const OpenAI = require("openai");
 const cors = require("cors")({ origin: true });
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
 
 exports.extractIdentityNodes = functions.https.onRequest((req, res) => {
   cors(req, res, async () => {
@@ -14,15 +9,23 @@ exports.extractIdentityNodes = functions.https.onRequest((req, res) => {
       return res.status(405).send("Method Not Allowed");
     }
 
-    const { journalText } = req.body;
+    const { journalText, userReflection = "", selectedOption = "" } = req.body;
+
     if (!journalText) {
       return res.status(400).json({ error: "Missing journalText" });
     }
 
-    const prompt = `
-You are a helpful assistant that extracts self-knowledge insights from journaling.
+    // ✅ Initialize OpenAI safely here
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
 
-Given the following journal entry, extract up to 5 "identity nodes." Each node should be a meaningful piece of self-knowledge, categorized as a value, belief, trait, emotion, goal, or tension. Use this schema:
+    const prompt = `
+You are a helpful mentor and therapist that extracts self-knowledge insights from journaling.
+
+Given the following journal entry and optional user reflection + selected option, extract up to 5 "identity nodes." Each node should be a meaningful piece of self-knowledge, categorized as a value, belief, trait, emotion, goal, or tension.
+
+Use this exact schema for each node:
 
 {
   "label": "short phrase",
@@ -34,13 +37,13 @@ Given the following journal entry, extract up to 5 "identity nodes." Each node s
   }
 }
 
-Journal entry:
-"""
-${journalText}
-"""
+Context:
+- Journal entry: """${journalText}"""
+- Selected option (if any): "${selectedOption}"
+- User reflection (if any): """${userReflection}"""
 
-Return only a JSON array.
-`;
+Return only a valid JSON array.
+    `;
 
     try {
       const response = await openai.chat.completions.create({
@@ -50,7 +53,6 @@ Return only a JSON array.
       });
 
       let content = response.choices[0].message.content;
-      // Strip Markdown code block formatting if present
       content = content.trim().replace(/^```json\s*/i, "").replace(/```$/, "");
 
       const identityNodes = JSON.parse(content);
@@ -58,6 +60,7 @@ Return only a JSON array.
       return res.status(200).json({ identityNodes });
     } catch (error) {
       console.error("OpenAI error:", error.message);
+      console.error("Full error:", error);
       return res.status(500).json({ error: "Failed to extract identity nodes" });
     }
   });
