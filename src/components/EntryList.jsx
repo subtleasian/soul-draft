@@ -18,7 +18,7 @@ export default function EntryList({ user }) {
     const q = query(
       collection(db, "identityNode"),
       where("userId", "==", user.uid),
-      orderBy("createdAt", "desc")
+      orderBy("createdAt", "desc") // orderBy desc needs to be indexed with firebase to works
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {

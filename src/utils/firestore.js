@@ -5,14 +5,17 @@ import { collection, addDoc, doc, setDoc, updateDoc, getDocs } from "firebase/fi
 // Save a new identity node to Firestore
 export async function saveIdentityNode(node, nodeId = null) {
   try {
-    if (nodeId) {
-      const ref = doc(db, "identityNodes", nodeId);
-      await setDoc(ref, node);
-      return ref.id;
-    } else {
-      const docRef = await addDoc(collection(db, "identityNodes"), node);
-      return docRef.id;
-    }
+    const ref = nodeId
+      ? doc(db, "identityNodes", nodeId)
+      : doc(collection(db, "identityNodes"));
+
+    await setDoc(ref, {
+      ...node,
+      followUpPrompt: node.followUpPrompt || null,
+      updatedAt: new Date()
+    });
+
+    return ref.id;
   } catch (error) {
     console.error("Failed to save identity node:", error);
     throw error;

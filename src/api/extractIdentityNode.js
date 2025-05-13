@@ -1,4 +1,3 @@
-
 export async function extractIdentityNode({
   journalText,
   userReflection,
@@ -25,6 +24,7 @@ export async function extractIdentityNode({
     }
 
     const identityNode = data.identityNode;
+    const followUpPrompt = data.followUpPrompt || null;
 
     const timestamp = new Date();
 
@@ -39,7 +39,8 @@ export async function extractIdentityNode({
         reflection: userReflection
       },
       createdAt: timestamp,
-      updatedAt: timestamp
+      updatedAt: timestamp,
+      followUpPrompt // 🧠 include the therapist-style follow-up
     };
   } catch (error) {
     console.error("Error extracting identity node:", error);

@@ -10,6 +10,7 @@ import Auth from "./components/Auth";
 import UserInfo from "./components/UserInfo";
 import Journal from "./components/Journal";
 import GiraffeNeckProgress from './components/GiraffeNeckProgress';
+import ConversationFlow from "./components/ConversationFlow";
 // import AdminTools from "./components/AdminTools"; // future
 
 export default function App() {
@@ -27,6 +28,7 @@ export default function App() {
         <UserInfo user={user} />
         <Routes>
           <Route path="/" element={user ? <Journal user={user} /> : null} />
+          <Route path="/conversation" element={<ConversationFlow />} />
           {/* <Route path="/admin" element={<AdminTools user={user} />} /> */}
           {/* <Route path="/profile" element={<GiraffeNeckProgress insights={userInsights} />} /> */}
         </Routes>

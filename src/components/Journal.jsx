@@ -3,6 +3,7 @@ import Prompt from "./Prompt";
 import EntryForm from "./EntryForm";
 import EntryList from "./EntryList";
 import { fetchPrompts } from "../utils/firestore";
+import ConversationFlow from "./ConversationFlow";
 
 export default function Journal({ user }) {
   const [activeTab, setActiveTab] = useState("prompt"); // "prompt" or "freeform"
@@ -53,9 +54,7 @@ export default function Journal({ user }) {
           {activeTab === "prompt" ? "Explore What’s Shaped You" : "Write Freely From Within"}
         </h2>
 
-        {activeTab === "prompt" && activePrompt && Array.isArray(activePrompt.options) && (
-          <Prompt prompt={activePrompt} user={user} />
-        )}
+        {activeTab === "prompt" && <ConversationFlow />}
 
         {activeTab === "freeform" && (
           <EntryForm user={user} entry={entry} setEntry={setEntry} />
@@ -67,6 +66,7 @@ export default function Journal({ user }) {
         <h3 className="text-lg font-semibold text-gray-700 mb-4">🧠 Your Identity Insights</h3>
         <EntryList user={user} />
       </section>
+
     </div>
   );
 }

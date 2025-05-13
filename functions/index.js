@@ -114,8 +114,41 @@ Return exactly one JSON object using the schema above. No explanation.
       };
 
       console.log("✅ Final enriched node:", enrichedNode);
+      
+      let followUpPrompt = null;
+      try {
+        const followUpRes = await openai.chat.completions.create({
+          model: "gpt-4o",
+          messages: [{
+            role: "user",
+            content: `
+      You are a warm, emotionally intelligent therapist.
+      Given the user's reflection, write a thoughtful follow-up question that invites the user to explore their emotions, beliefs, or past experiences more deeply.
 
-return res.status(200).json({ identityNode: enrichedNode });
+      Reflection:
+      """${userReflection}"""
+
+      Return only the question. No preamble or extra words.
+            `.trim()
+          }],
+          temperature: 0.5
+        });
+
+        followUpPrompt = followUpRes.choices[0].message.content.trim();
+        console.log("🧠 Follow-up question generated:", followUpPrompt);
+      } catch (error) {
+        console.error("❌ Failed to generate follow-up prompt:", error.message);
+      }
+
+      return res.status(200).json({
+        identityNode: enrichedNode,
+        followUpPrompt
+      });
+
+return res.status(200).json({ 
+    identityNode: enrichedNode,
+    followUpPrompt: followUpQuestion
+  });
 
     } catch (error) {
       console.error("🔥 Extraction or scoring failed:", error.message);
@@ -174,6 +207,7 @@ Return only valid JSON in this format:
     return {};
   }
 }
+
 
 
 // === Helper: Token Reward Logic ===
