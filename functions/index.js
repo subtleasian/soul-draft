@@ -122,7 +122,7 @@ Return exactly one JSON object using the schema above. No explanation.
           messages: [{
             role: "user",
             content: `
-      You are a warm, emotionally intelligent therapist.
+      You are a warm, emotionally intelligent mentor.
       Given the user's reflection, write a thoughtful follow-up question that invites the user to explore their emotions, beliefs, or past experiences more deeply.
 
       Reflection:
@@ -160,37 +160,71 @@ return res.status(200).json({
 
 // === Helper: Heuristic Scoring ===
 async function getHeuristicScores(openai, reflection) {
-  const prompt = `
-You are an emotionally intelligent AI. Score this reflection from 0.0–1.0 across the following dimensions.
+  const prompt = `You are an emotionally and cognitively intelligent AI. Your task is to evaluate a user's written reflection and return a structured JSON object scoring it across multiple dimensions of cognition, emotion, identity, language, and ethics.
+
+Each score should range from 0.0 to 1.0 and reflect your best estimate of the degree to which that quality is present in the reflection.
+
+You must also infer any traits, values, and emotions that are clearly expressed or implied by the user.
 
 Reflection:
-"""${reflection}"""
+"""
+{{user_input_text}}
+"""
 
-Return only valid JSON in this format:
+Return only valid JSON in the following format:
 
 {
   "cognitive": {
     "conceptualComplexity": 0.0,
+    "clarity": 0.0,
+    "originality": 0.0,
+    "criticalThinking": 0.0,,
     "metaphorDensity": 0.0,
-    "temporalShift": 0.0,
-    "counterfactualReasoning": 0.0,
-    "personalization": 0.0
+    temporalReasoning: 0.0,
+    "counterfactualThinking": 0.0
   },
   "emotional": {
     "emotionalGranularity": 0.0,
+    "emotionalIntensity": 0.0,
     "polarityRange": 0.0,
-    "sentimentArc": 0.0,
-    "intensity": 0.0,
-    "selfDisclosure": 0.0
+    "emotionalRisk": 0.0,
+    "empathy": 0.0,
+    "selfCompassion": 0.0,
+    "emotionalInversion": 0.0
   },
-  "engagement": {
-    "lengthScore": 0.0,
-    "narrativeArc": 0.0,
-    "promptRelevance": 0.0,
-    "reflectionLooping": 0.0
+  "identity": {
+    "selfInsight": 0.0,
+    "valueSalience": 0.0,
+    "agency": 0.0,
+    "traitInferenceConfidence": 0.0
+  },
+  "linguistic": {
+    "lexicalRichness": 0.0,
+    "syntacticComplexity": 0.0,
+    "fluency": 0.0,
+    "verbosity": 0.0,
+    "repetitiveness": 0.0
+  },
+  "socialEthical": {
+    "moralReasoning": 0.0,
+    "perspectiveTaking": 0.0,
+    "culturalAwareness": 0.0,
+    "socialDesirabilityBias": 0.0
+  },
+  "inferred": {
+    "traits": ["example_trait_1", "example_trait_2"],
+    "values": ["example_value_1", "example_value_2"],
+    "emotions": ["example_emotion_1", "example_emotion_2"]
   }
 }
-`;
+
+Guidance:
+- Traits might include: curiosity, discipline, vulnerability, ambition, patience, etc.
+- Values might include: honesty, growth, family, independence, justice, loyalty, etc.
+- Emotions might include: anxiety, excitement, joy, guilt, confusion, pride, etc.
+- If something is not clearly present in the reflection, leave it blank or assign a low score.
+- Do not infer or fabricate if the reflection is too short or vague — be conservative in your scoring.
+- Output nothing but the JSON response.`;
 
   try {
     const res = await openai.chat.completions.create({

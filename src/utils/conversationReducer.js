@@ -53,6 +53,17 @@ export function conversationReducer(state, action) {
         reflections: [...state.reflections, action.reflection]
       };
 
+    case "ADD_IDENTITY_NODE":
+      return {
+        ...state,
+        identityNodes: [...state.identityNodes, action.node],
+        currentFollowUpPrompt: action.node.followUpPrompt || null,
+        stepsCompleted: state.stepsCompleted + 1,
+        tokensEarned: state.tokensEarned + (action.node.tokenReward || 0),
+        state: action.node.followUpPrompt ? "FOLLOW_UP_PROMPT" : "AI_INSIGHT"
+      };
+
+
     case "RECEIVE_AI_INSIGHT": {
       const { identityNode } = action;
       const reward = identityNode.tokenReward || 0;

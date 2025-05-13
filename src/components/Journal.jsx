@@ -54,7 +54,7 @@ export default function Journal({ user }) {
           {activeTab === "prompt" ? "Explore What’s Shaped You" : "Write Freely From Within"}
         </h2>
 
-        {activeTab === "prompt" && <ConversationFlow />}
+        {activeTab === "prompt" && <ConversationFlow user={user} />}
 
         {activeTab === "freeform" && (
           <EntryForm user={user} entry={entry} setEntry={setEntry} />
