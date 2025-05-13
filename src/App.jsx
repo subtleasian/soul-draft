@@ -9,6 +9,7 @@ import Layout from "./components/Layout";
 import Auth from "./components/Auth";
 import UserInfo from "./components/UserInfo";
 import Journal from "./components/Journal";
+import GiraffeNeckProgress from './components/GiraffeNeckProgress';
 // import AdminTools from "./components/AdminTools"; // future
 
 export default function App() {
@@ -27,6 +28,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={user ? <Journal user={user} /> : null} />
           {/* <Route path="/admin" element={<AdminTools user={user} />} /> */}
+          {/* <Route path="/profile" element={<GiraffeNeckProgress insights={userInsights} />} /> */}
         </Routes>
       </Layout>
     </Router>

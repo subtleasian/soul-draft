@@ -14,6 +14,7 @@ export default function Prompt({ prompt, user }) {
   const [submitted, setSubmitted] = useState(false);
 
   const { extractNodes, loading, error } = useIdentityNodeExtractor();
+  const [extractedNode, setExtractedNode] = useState(null);
 
   if (!prompt || !Array.isArray(prompt.options)) {
     return <div className="text-red-600">⚠️ Prompt data missing or invalid.</div>;

@@ -3,7 +3,7 @@ import { db } from "./firebase"; // make sure this exports your initialized Fire
 
 export async function saveIdentityNode(node) {
   try {
-    const nodeRef = doc(db, "identityNodes", node.id);
+    const nodeRef = doc(db, "identityNode", node.id);
     await setDoc(nodeRef, node);
     console.log("✅ Identity node saved:", node);
   } catch (error) {

@@ -16,13 +16,15 @@ export default function EntryList({ user }) {
     if (!user?.uid) return;
 
     const q = query(
-      collection(db, "identityNodes"),
+      collection(db, "identityNode"),
       where("userId", "==", user.uid),
       orderBy("createdAt", "desc")
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setNodes(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      console.log("📦 Loaded identity nodes:", snapshot.docs.length);
+      console.log("🧠 Sample node:", snapshot.docs[0]?.data());
     });
 
     return () => unsubscribe(); // Cleanup on unmount

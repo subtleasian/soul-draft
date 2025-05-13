@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { extractIdentityNodes } from "../api/extractIdentityNodes";
+import { extractIdentityNode } from "../api/extractIdentityNode";
 import { saveIdentityNode } from "../firebase/saveIdentityNode";
 
 export function useIdentityNodeExtractor() {
@@ -17,20 +17,22 @@ export function useIdentityNodeExtractor() {
     setError(null);
 
     try {
-      const nodes = await extractIdentityNodes(
+      const node = await extractIdentityNode({
         journalText,
         userReflection,
         journalEntryId,
         selectedOption,
         userId
-      );
+      });
 
-      // Save each node to Firestore
-      await Promise.all(nodes.map(saveIdentityNode));
+      if (!node) {
+        throw new Error("No identity node returned from API.");
+      }
 
-      return nodes; // You may still want to return them for UI purposes
+      await saveIdentityNode(node);
+      return node; // still return an array for consistency in UI
     } catch (err) {
-      console.error("Error extracting or saving identity nodes:", err);
+      console.error("❌ Error extracting or saving identity node:", err);
       setError(err);
       return [];
     } finally {

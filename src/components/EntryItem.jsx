@@ -72,6 +72,20 @@ export default function EntryItem({ entry }) {
           “{entry.origin.reflection}”
         </blockquote>
       )}
+
+      {typeof entry.tokenReward === "number" && (
+        <div className="mt-3">
+          <p className="text-sm text-yellow-700 font-medium">
+            ⭐ Token Reward: <strong>{entry.tokenReward}</strong> / 100
+          </p>
+          <div className="w-full bg-yellow-100 h-2 rounded-full mt-1">
+            <div
+              className="bg-yellow-400 h-2 rounded-full"
+              style={{ width: `${entry.tokenReward}%` }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
