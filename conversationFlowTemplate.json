@@ -1,0 +1,25 @@
+
+{
+  "conversationFlow": [
+    {
+      "type": "acknowledgment",
+      "content": "💬 I see you chose {theme}. That's a powerful choice!"
+    },
+    {
+      "type": "reflectionPrompt",
+      "content": "📝 Would you like to share more about why this resonates with you?"
+    },
+    {
+      "type": "followUpIfSkipped",
+      "content": "🤝 No worries if not! I'm here to support you whenever you're ready."
+    },
+    {
+      "type": "insightTemplate",
+      "content": "🔍 This choice reflects your {trait} and {theme}."
+    },
+    {
+      "type": "timeCheckPrompt",
+      "content": "⏱ How are you feeling about this? Do you want to take a moment or dive deeper?"
+    }
+  ]
+}

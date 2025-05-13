@@ -21,9 +21,15 @@ exports.extractIdentityNodes = functions.https.onRequest((req, res) => {
     });
 
     const prompt = `
-You are a helpful mentor and therapist that extracts self-knowledge insights from journaling.
+You are a helpful therapist that extracts self-knowledge insights from journaling.
 
-Given the following journal entry and optional user reflection + selected option, extract up to 5 "identity nodes." Each node should be a meaningful piece of self-knowledge, categorized as a value, belief, trait, emotion, goal, or tension.
+Given the following journal entry and optional user reflection + selected option, extract up to 5 "identity nodes." 
+
+Each node should be a meaningful piece of self-knowledge, categorized as a value, belief, trait, emotion, goal, or tension.
+
+When creating the label, avoid using exact words or phrases from the original reflection or selected option. 
+
+Rephrase or interpret the user’s answer in novel terms.
 
 Use this exact schema for each node:
 
