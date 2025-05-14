@@ -1,6 +1,6 @@
+// src/hooks/useIdentityNodeExtractor.js
+
 import { useState } from "react";
-import { extractIdentityNode } from "../api/extractIdentityNode";
-import { saveIdentityVectorNode } from "../utils/saveIdentityVectorNode";
 
 export function useIdentityNodeExtractor() {
   const [loading, setLoading] = useState(false);
@@ -11,28 +11,46 @@ export function useIdentityNodeExtractor() {
     userReflection = "",
     journalEntryId = "",
     selectedOption = "",
-    userId
+    userId = "TEMP_USER_ID"
   }) => {
     setLoading(true);
     setError(null);
 
     try {
-      console.log("🌐 Sending request to Cloud Run...");
-      const node = await extractIdentityNode({
-        journalText,
-        userReflection,
-        journalEntryId,
-        selectedOption,
-        userId
+      const response = await fetch("https://extractidentitynodev2-d5g54wgdxq-uc.a.run.app", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ journalText, userReflection, selectedOption })
       });
-      console.log("💰 tokenReward in node:", node.tokenReward);
-      if (!node) {
-        throw new Error("No identity node returned from API.");
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
       }
 
-      console.log("✅ API response received:", node);
+      const data = await response.json();
 
-      await saveIdentityVectorNode(node, journalEntryId, journalText);
+      if (!data || !data.heuristicScores) {
+        console.warn("❌ No valid data returned from API.");
+        return [];
+      }
+
+      const timestamp = new Date();
+      const node = {
+        id: crypto.randomUUID(),
+        userId,
+        heuristicScores: data.heuristicScores,
+        inferred: data.inferred,
+        followUpPrompt: data.followUpPrompt || "",
+        tokenReward: data.tokenReward ?? { total: 0, byDimension: {} },
+        origin: {
+          excerpt: data.excerpt || "",
+          journalEntryId,
+          selectedOption,
+          reflection: userReflection
+        },
+        createdAt: timestamp,
+        updatedAt: timestamp
+      };
 
       return [node];
     } catch (err) {

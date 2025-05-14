@@ -2,7 +2,7 @@
 import React from "react";
 
 export default function InsightSummary({ node, onContinue, onNewTopic, onPause }) {
-  const inferred = node?.heuristicScores?.inferred || {};
+  const inferred = node?.inferred || {};
 
   return (
     <div className="bg-blue-50 p-4 rounded shadow space-y-4">
@@ -10,27 +10,30 @@ export default function InsightSummary({ node, onContinue, onNewTopic, onPause }
 
       <div className="space-y-2 text-gray-700">
         <p>
-          You've earned <strong>{node?.tokenReward || 0}</strong> tokens for your reflection.
+          You've earned <strong>{node?.tokenReward?.total || 0}</strong> tokens for your reflection.
         </p>
 
         {inferred.traits?.length > 0 && (
           <p>
-            <span className="font-semibold">🧬 Traits:</span> {inferred.traits.join(", ")}
+            <span className="font-semibold">🧬 Traits:</span>{" "}
+            {inferred.traits.map(t => t.trait).join(", ")}
           </p>
         )}
         {inferred.values?.length > 0 && (
           <p>
-            <span className="font-semibold">🌱 Values:</span> {inferred.values.join(", ")}
+            <span className="font-semibold">🌱 Values:</span>{" "}
+            {inferred.values.map(v => v.value).join(", ")}
           </p>
         )}
         {inferred.emotions?.length > 0 && (
           <p>
-            <span className="font-semibold">💫 Emotions:</span> {inferred.emotions.join(", ")}
+            <span className="font-semibold">💫 Emotions:</span>{" "}
+            {inferred.emotions.map(e => e.emotion).join(", ")}
           </p>
         )}
       </div>
 
-{/* Save logic for the inferred.traits, values, emotions?? */}
+      {/* Save logic for the inferred.traits, values, emotions?? */}
 
       <div className="pt-4 border-t text-sm text-gray-600">
         <p>What would you like to do next?</p>

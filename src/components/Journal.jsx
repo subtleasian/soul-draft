@@ -2,6 +2,14 @@ import React, { useState } from "react";
 import EntryList from "./EntryList";
 import PromptCategoryPicker from "./PromptCategoryPicker";
 import ConversationFlow from "./ConversationFlow";
+import UserProgress from "./UserProgress";
+
+import { doc, setDoc } from "firebase/firestore";
+import { db } from "../firebase/firebase";
+
+setDoc(doc(db, "debugTest", "test123"), { test: true })
+  .then(() => console.log("✅ Manual write succeeded"))
+  .catch(err => console.error("❌ Manual write failed:", err));
 
 export default function Journal({ user }) {
   const [dynamicTitle, setDynamicTitle] = useState("How would you like to begin?");
@@ -16,6 +24,7 @@ export default function Journal({ user }) {
     { label: "🎲 Freeform / Surprise Me", value: "freeform" },
     { label: "🔁 Revisit a Past Insight", value: "revisit" }
   ];
+  
 
   const handleCategorySelect = (categoryValue) => {
     const categoryObj = promptCategories.find(c => c.value === categoryValue);
@@ -49,6 +58,11 @@ export default function Journal({ user }) {
             onReset={handleResetToCategories} // 👈 new prop
           />
         )}
+      </section>
+
+      <section className="pt-6 border-t">
+        <h3 className="text-lg font-semibold text-gray-700 mb-4">🎟️ Your Emotigraf Tokens</h3>
+        <UserProgress user={user} />
       </section>
 
       <section className="pt-6 border-t">

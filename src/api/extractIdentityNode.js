@@ -1,53 +1,45 @@
-export async function extractIdentityNode({
-  journalText,
-  userReflection,
-  selectedOption,
-  userId,
-  journalEntryId
-}) {
+export async function extractIdentityNodes(journalText, userReflection = "", journalEntryId = "", selectedOption = "", userId = "TEMP_USER_ID") {
   try {
-    const response = await fetch("https://extractidentitynode-d5g54wgdxq-uc.a.run.app", {
+    const response = await fetch("https://extractidentitynodev2-d5g54wgdxq-uc.a.run.app", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        journalText,
-        userReflection,
-        selectedOption
-      })
+      body: JSON.stringify({ journalText, userReflection, selectedOption })
     });
 
-    const data = await response.json();
+    const result = await response.json();
 
-    if (
-      !data.heuristicScores ||
-      typeof data.heuristicScores !== "object" ||
-      !data.inferred ||
-      typeof data.inferred !== "object"
-    ) {
-      console.error("❌ Invalid response structure:", data);
-      return null;
+    if (!result.identityNodes || !Array.isArray(result.identityNodes)) {
+      throw new Error("identityNodes missing or invalid");
     }
-
+    
     const timestamp = new Date();
 
-    return {
+    return result.identityNodes.map((node) => ({
+      ...node,
       id: crypto.randomUUID(),
       userId,
-      heuristicScores: data.heuristicScores,
-      inferred: data.inferred,
-      followUpPrompt: data.followUpPrompt || "",
-      tokenReward: data.tokenReward ?? 0,
+      status: getStatusByConfidence(node.confidence),
+      reviewedByUser: false,
+      tokenReward: typeof result.tokenReward === "object"
+        ? result.tokenReward
+        : { total: Number(result.tokenReward || 0), byDimension: {} },
       origin: {
-        excerpt: data.excerpt || "",
         journalEntryId,
-        selectedOption,
-        reflection: userReflection
+        excerpt: node.origin?.excerpt || result.excerpt || "",
+        reflection: userReflection,
+        selectedOption
       },
       createdAt: timestamp,
       updatedAt: timestamp
-    };
-  } catch (error) {
-    console.error("❌ Error extracting identity node:", error);
-    return null;
+    }));
+  } catch (err) {
+    console.error("extractIdentityNodes failed:", err);
+    return []; // fallback
   }
-}
+
+  function getStatusByConfidence(confidence) {
+    if (confidence >= 0.75) return "confirmed";
+    if (confidence >= 0.4) return "suggested";
+    return "dismissed";
+  }
+} 

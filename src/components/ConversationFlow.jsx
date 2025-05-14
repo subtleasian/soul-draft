@@ -1,160 +1,154 @@
+// components/ConversationFlow.jsx
 import React, { useEffect, useReducer, useState } from "react";
-import { collection, query, where, getDocs } from "firebase/firestore";
-import { db } from "../firebase/firebase";
+import { fetchPrompts } from "../utils/firestore";
 import { useIdentityNodeExtractor } from "../hooks/useIdentityNodeExtractor";
-import { updateUserProgress } from "../utils/updateUserProgress";
-import InsightSummary from "./InsightSummary";
+import { saveIdentityVectorNode } from "../utils/saveIdentityVectorNode";
+import { rewardUserTokens } from "../utils/updateUserTokens";
+import TokenRewardBreakdown from "./TokenRewardBreakdown";
 import { conversationReducer, initialConversationState } from "../utils/conversationReducer";
 
-export default function ConversationFlow({ category, categoryLabel, user, setDynamicTitle, onReset }) {
-  // Local reducer for potential future state transitions
+export default function ConversationFlow({ user, category, categoryLabel, setDynamicTitle, onReset }) {
   const [state, dispatch] = useReducer(conversationReducer, initialConversationState);
-
-  // Local state for the selected prompt, user input, and insight summary
   const [prompts, setPrompts] = useState([]);
   const [selectedPrompt, setSelectedPrompt] = useState(null);
   const [reflectionText, setReflectionText] = useState("");
-  const [lastNode, setLastNode] = useState(null);
+  const [tokenReward, setTokenReward] = useState(null);
+  const { extractNodes, loading, error } = useIdentityNodeExtractor();
 
-  const { extractNodes, loading } = useIdentityNodeExtractor();
-
-  // Fetch prompt list from Firestore filtered by selected category
   useEffect(() => {
-    async function loadPrompts() {
-      const q = query(collection(db, "prompts"), where("category", "==", category));
-      const snapshot = await getDocs(q);
-      const docs = snapshot.docs.map((doc) => doc.data());
-
-      if (docs.length > 0) {
-        const promptList = docs[0].prompts;
-        setPrompts(promptList);
-
-        // Select a random prompt from that category
-        const randomPrompt = promptList[Math.floor(Math.random() * promptList.length)];
-        setSelectedPrompt(randomPrompt);
-
-        // Optional: dispatch to reducer for conversation state management
-        dispatch({ type: "SELECT_PROMPT", promptText: randomPrompt });
-
-          if (setDynamicTitle) {
-          setDynamicTitle(`${categoryLabel}`);
-        }
-      }
+    async function load() {
+      const loaded = await fetchPrompts();
+      setPrompts(loaded);
     }
+    load();
+  }, []);
 
-    loadPrompts();
-  }, [category]);
+  useEffect(() => {
+    if (category && prompts.length > 0 && !selectedPrompt) {
+      selectRandomPrompt(category);
+    }
+  }, [category, prompts, selectedPrompt]);
 
-  // Handle reflection submission
+  const selectRandomPrompt = (cat) => {
+  const filtered = prompts.filter((p) => p.category === cat);
+  const group = filtered[Math.floor(Math.random() * filtered.length)];
+
+  if (!group?.prompts?.length) {
+    setSelectedPrompt(null);
+    return;
+  }
+
+  const randomText = group.prompts[Math.floor(Math.random() * group.prompts.length)];
+  console.log("🎯 Final selected prompt text:", randomText);
+
+  setSelectedPrompt({
+    ...group,
+    text: randomText
+  });
+
+  dispatch({ type: "RESET_FLOW" });
+  setReflectionText("");
+  setTokenReward(null);
+};
+
   const handleSubmitReflection = async () => {
-    if (!reflectionText || reflectionText.trim().length < 3) return;
+    if (!selectedPrompt || !reflectionText.trim()) return;
+    const journalEntryId = `${selectedPrompt.id || selectedPrompt.text.slice(0, 10)}-${Date.now()}`;
 
-    const journalEntryId = `${category}-${Date.now()}`;
-    const identityNodes = await extractNodes({
-      journalText: selectedPrompt,
+    const nodes = await extractNodes({
+      journalText: selectedPrompt.text,
       userReflection: reflectionText,
       journalEntryId,
-      selectedOption: selectedPrompt,
+      selectedOption: state.currentOption,
       userId: user.uid
     });
 
-    // Update user progress for each identity node
-    for (const node of identityNodes) {
-      await updateUserProgress(user.uid, node);
+    if (!nodes.length) return;
+    for (const node of nodes) {
+      await saveIdentityVectorNode(node, journalEntryId, selectedPrompt.text);
+      const rewardAmount = node.tokenReward?.total || node.tokenReward || 0;
+      const byDimension = node.tokenReward?.byDimension || {};
+      setTokenReward({ total: rewardAmount, byDimension });
+
+      await rewardUserTokens({
+        userId: user.uid,
+        amount: rewardAmount,
+        byDimension,
+        journalEntryId,
+        reason: `Reflection on '${selectedPrompt.text}'`
+      });
     }
 
-    // Store the most salient node for feedback (or fallback to first)
-    const confirmed = identityNodes.find((n) => n.status === "confirmed") || identityNodes[0];
-    setLastNode(confirmed);
-    setReflectionText("");
-    setDynamicTitle("✅ Insight Saved — Want to reflect again?");
+    dispatch({ type: "COMPLETE_REFLECTION" });
   };
 
-  // Restart same category with new prompt
-  const handleRestartCategory = () => {
-    setLastNode(null);
-    setSelectedPrompt(null);
-    setReflectionText("");
-
-    const newPrompt = prompts[Math.floor(Math.random() * prompts.length)];
-    setSelectedPrompt(newPrompt);
-    dispatch({ type: "SELECT_PROMPT", promptText: newPrompt });
-  };
-
-  // Start completely fresh with no category pre-selected
   const handleStartNewTopic = () => {
-    setLastNode(null);
     setSelectedPrompt(null);
     setReflectionText("");
+    setTokenReward(null);
     dispatch({ type: "RESET_FLOW" });
-    
-    if (onReset) onReset(); // 👈 triggers return to category picker
+    if (onReset) onReset();
   };
 
-  // User pauses journaling session
-  const handlePause = () => {
-    setLastNode(null);
-    setSelectedPrompt(null);
-    setReflectionText("");
-    // Optional: send user back to home or just collapse flow
+  const handleRefreshPrompt = () => {
+    if (category) selectRandomPrompt(category);
   };
 
   return (
-    <div className="space-y-6">
-      {/* If a reflection has been submitted, show insight summary with next options */}
-      {lastNode ? (
-        <InsightSummary
-          node={lastNode}
-          onContinue={handleRestartCategory}
-          onNewTopic={handleStartNewTopic}
-          onPause={handlePause}
-        />
+    <div className="max-w-2xl mx-auto space-y-6 p-4">
+      {!selectedPrompt ? (
+        <>
+          <h2 className="text-xl font-semibold">Loading prompt...</h2>
+        </>
       ) : (
         <>
-          {/* Show selected prompt and text area */}
-          {selectedPrompt && (
-            <>
-              <div className="p-4 border rounded-xl bg-white shadow-sm">
-                <h3 className="text-lg font-semibold text-blue-900">{selectedPrompt}</h3>
-              </div>
-                <div className="flex justify-between items-center mt-4">
-                <button
-                  onClick={handleStartNewTopic}
-                  className="text-sm text-gray-600 hover:underline"
-                >
-                  ← Back to Categories
-                </button>
+          <h2 className="text-xl font-semibold text-blue-800">{selectedPrompt?.text}</h2>
 
-                <button
-                  onClick={handleRestartCategory}
-                  className="text-sm text-blue-600 hover:underline"
-                >
-                  🔄 New Prompt
-                </button>
+          {selectedPrompt?.options?.map((option, idx) => (
+            <button
+              key={idx}
+              onClick={() => dispatch({ type: "SELECT_OPTION", option })}
+              className={`block w-full text-left px-4 py-2 rounded ${
+                state.currentOption === option ? "bg-blue-200" : "bg-gray-100"
+              }`}
+            >
+              {option}
+            </button>
+          ))}
 
-              </div>
-
+          {(state.currentOption || !selectedPrompt?.options?.length) && (
+            <div className="mt-4 space-y-2">
               <textarea
-                className="w-full p-3 border rounded-md"
+                className="w-full border rounded p-2"
                 rows={5}
-                placeholder="Write your reflection here..."
                 value={reflectionText}
                 onChange={(e) => setReflectionText(e.target.value)}
+                placeholder="Reflect freely..."
               />
-
-              <button
-                onClick={handleSubmitReflection}
-                disabled={loading}
-                className="px-4 py-2 rounded bg-blue-600 text-white"
-              >
-                {loading ? "Saving..." : "Save Reflection"}
-              </button>
-            </>
-          )}
-
-          {/* If prompt is not loaded yet */}
-          {!selectedPrompt && (
-            <p className="text-gray-500 italic">Loading a prompt in {category}...</p>
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  onClick={handleSubmitReflection}
+                  className="px-4 py-2 bg-blue-600 text-white rounded"
+                >
+                  {loading ? "Saving..." : "Save Reflection"}
+                </button>
+                <button
+                  onClick={handleStartNewTopic}
+                  className="px-4 py-2 bg-gray-200 rounded"
+                >
+                  Back to Categories
+                </button>
+                <button
+                  onClick={handleRefreshPrompt}
+                  className="px-4 py-2 bg-yellow-200 rounded"
+                >
+                  New Prompt in Same Category
+                </button>
+              </div>
+              {error && <p className="text-sm text-red-600">Something went wrong.</p>}
+              {state.completed && <p className="text-green-600">Insight saved.</p>}
+              {tokenReward && <TokenRewardBreakdown reward={tokenReward} />}
+            </div>
           )}
         </>
       )}
