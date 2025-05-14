@@ -18,32 +18,36 @@ export async function extractIdentityNode({
 
     const data = await response.json();
 
-    if (!data.identityNode || typeof data.identityNode !== "object") {
-      console.error("❌ Invalid or missing identityNode in response:", data);
+    if (
+      !data.heuristicScores ||
+      typeof data.heuristicScores !== "object" ||
+      !data.inferred ||
+      typeof data.inferred !== "object"
+    ) {
+      console.error("❌ Invalid response structure:", data);
       return null;
     }
-
-    const identityNode = data.identityNode;
-    const followUpPrompt = data.followUpPrompt || null;
 
     const timestamp = new Date();
 
     return {
-      ...identityNode,
       id: crypto.randomUUID(),
       userId,
+      heuristicScores: data.heuristicScores,
+      inferred: data.inferred,
+      followUpPrompt: data.followUpPrompt || "",
+      tokenReward: data.tokenReward ?? 0,
       origin: {
-        excerpt: identityNode.origin?.excerpt || "",
+        excerpt: data.excerpt || "",
         journalEntryId,
         selectedOption,
         reflection: userReflection
       },
       createdAt: timestamp,
-      updatedAt: timestamp,
-      followUpPrompt // 🧠 include the therapist-style follow-up
+      updatedAt: timestamp
     };
   } catch (error) {
-    console.error("Error extracting identity node:", error);
+    console.error("❌ Error extracting identity node:", error);
     return null;
   }
 }

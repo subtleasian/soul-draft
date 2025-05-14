@@ -1,18 +1,10 @@
 import { useState } from "react";
 import { extractIdentityNode } from "../api/extractIdentityNode";
-import { saveIdentityNode } from "../firebase/saveIdentityNode";
-
+import { saveIdentityVectorNode } from "../utils/saveIdentityVectorNode";
 
 export function useIdentityNodeExtractor() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
-  // ✅ Token reward calculator (put this above extractNodes)
-  function calculateTokenReward(node) {
-    const e = node.heuristicScores?.emotional?.emotionalIntensity || 0;
-    const i = node.heuristicScores?.identity?.selfInsight || 0;
-    return Math.round((e + i) * 10); // e.g., 0.6 + 0.8 = 14
-  }
 
   const extractNodes = async ({
     journalText,
@@ -25,6 +17,7 @@ export function useIdentityNodeExtractor() {
     setError(null);
 
     try {
+      console.log("🌐 Sending request to Cloud Run...");
       const node = await extractIdentityNode({
         journalText,
         userReflection,
@@ -32,16 +25,18 @@ export function useIdentityNodeExtractor() {
         selectedOption,
         userId
       });
-
+      console.log("💰 tokenReward in node:", node.tokenReward);
       if (!node) {
         throw new Error("No identity node returned from API.");
       }
-      
-      node.tokenReward = calculateTokenReward(node); // Add reward before saving
-      await saveIdentityNode(node);
-      return [node]; // still return an array for consistency in UI
+
+      console.log("✅ API response received:", node);
+
+      await saveIdentityVectorNode(node, journalEntryId, journalText);
+
+      return [node];
     } catch (err) {
-      console.error("❌ Error extracting or saving identity node:", err);
+      console.error("❌ extractNodes error:", err);
       setError(err);
       return [];
     } finally {

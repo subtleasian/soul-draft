@@ -3,15 +3,12 @@ import { db } from "../firebase/firebase";
 import {
   collection,
   addDoc,
-  serverTimestamp,
-  doc,
-  updateDoc
+  serverTimestamp
 } from "firebase/firestore";
-import { saveIdentityNode } from "../utils/firestore";
-import { updateUserProgress } from "../utils/updateUserProgress";
 import JournalTextarea from "./JournalTextarea";
 import ExtractedNodesList from "./ExtractedNodesList";
 import { extractIdentityNode } from "../api/extractIdentityNode";
+import { saveIdentityVectorNode } from "../utils/saveIdentityVectorNode";
 
 export default function EntryForm({ user, entry, setEntry }) {
   const [extractedNode, setExtractedNode] = useState(null);
@@ -42,13 +39,10 @@ export default function EntryForm({ user, entry, setEntry }) {
 
       if (!node) throw new Error("No identity node returned");
 
-      // Step 3: Save identity node to Firestore
-      await saveIdentityNode(node, node.id);
+      // Step 3: Save modular identity insight
+      await saveIdentityVectorNode(node, journalEntryId, "");
 
-      // Step 4: Update user progress
-      await updateUserProgress(user.uid, node);
-
-      // Step 5: Show it in the UI
+      // Step 4: Show it in the UI
       setExtractedNode(node);
       setEntry("");
     } catch (err) {
@@ -71,7 +65,8 @@ export default function EntryForm({ user, entry, setEntry }) {
     setExtractedNode(updatedNode);
 
     try {
-      await updateDoc(doc(db, "identityNodes", updatedNode.id), {
+      const ref = doc(db, "identityNodes", updatedNode.id);
+      await updateDoc(ref, {
         status: newStatus,
         reviewedByUser: true,
         updatedAt: new Date()
@@ -94,11 +89,7 @@ export default function EntryForm({ user, entry, setEntry }) {
         <div className="mt-6 p-4 rounded-xl bg-gray-50 border">
           <h3 className="text-lg font-semibold text-blue-900">🧠 Insight Extracted</h3>
           <p className="text-sm text-gray-700">
-            <strong>Label:</strong> {extractedNode.label}<br />
-            <strong>Type:</strong> {extractedNode.type}<br />
-            <strong>Category:</strong> {extractedNode.category}<br />
-            <strong>Status:</strong> {extractedNode.status}<br />
-            <strong>Confidence:</strong> {(extractedNode.confidence * 100).toFixed(1)}%
+            <strong>Follow-Up Prompt:</strong> {extractedNode.followUpPrompt}
           </p>
           <p className="text-sm text-yellow-700 mt-2">
             ⭐ <strong>{extractedNode.tokenReward}</strong> Emotigraf Tokens earned

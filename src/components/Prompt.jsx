@@ -1,12 +1,17 @@
 import React, { useState } from "react";
 import {
-  generateConversationFlowTemplate,
-  inferIdentityTraitsFromInput
+  generateConversationFlowTemplate
 } from "../utils/conversationUtils";
-import { updateUserProgress } from "../utils/updateUserProgress";
 import { useIdentityNodeExtractor } from "../hooks/useIdentityNodeExtractor";
+import {
+  saveIdentityVectorNode
+} from "../utils/saveIdentityVectorNode";
+import {
+  calculateTokenReward,
+  rewardUserTokens
+} from "../utils/updateUserTokens";
 
-export default function Prompt({ prompt, user }) {
+export default function Prompt({ prompt, user, setDynamicTitle }) {
   const [selectedOption, setSelectedOption] = useState(null);
   const [conversationFlow, setConversationFlow] = useState(null);
   const [showReflection, setShowReflection] = useState(false);
@@ -14,7 +19,6 @@ export default function Prompt({ prompt, user }) {
   const [submitted, setSubmitted] = useState(false);
 
   const { extractNodes, loading, error } = useIdentityNodeExtractor();
-  const [extractedNode, setExtractedNode] = useState(null);
 
   if (!prompt || !Array.isArray(prompt.options)) {
     return <div className="text-red-600">⚠️ Prompt data missing or invalid.</div>;
@@ -26,13 +30,13 @@ export default function Prompt({ prompt, user }) {
     setUserReflection("");
     setSubmitted(false);
 
-    const traits = { inferredTrait: "", inferredTheme: "" }; // placeholder
+    if (setDynamicTitle) {
+      setDynamicTitle(`Reflecting on: ${option}`);
+    }
+
     const flow =
       prompt.conversationFlows?.[option] ||
-      generateConversationFlowTemplate({
-        selectedOption: option,
-        ...traits
-      });
+      generateConversationFlowTemplate({ selectedOption: option });
 
     setConversationFlow(flow);
   };
@@ -42,12 +46,6 @@ export default function Prompt({ prompt, user }) {
   };
 
   const handleSubmit = async () => {
-    console.log("Submitting insight:", {
-      selectedOption,
-      userReflection,
-      showReflection
-    });
-
     if (!selectedOption || !showReflection) return;
 
     if (!userReflection || userReflection.trim().length < 3) {
@@ -64,9 +62,24 @@ export default function Prompt({ prompt, user }) {
       selectedOption,
       userId: user.uid
     });
+    console.log("🧠 Extracted nodes:", nodes);
 
+    console.log("🧪 About to loop through extracted nodes", nodes);
     for (const node of nodes) {
-      await updateUserProgress(user.uid, node);
+      await saveIdentityVectorNode(node, journalEntryId, prompt.text);
+
+      const { reward: tokens, debug } = calculateTokenReward(node.heuristicScores);
+      console.log("🪙 Token Debug Log:", debug);
+
+      console.log("📦 About to reward tokens:", tokens, user.uid);
+
+      await rewardUserTokens({
+        console.log("🚀 rewardUserTokens invoked");
+        userId: user.uid,
+        amount: tokens,
+        journalEntryId,
+        reason: `Reflection on '${prompt.text}'`
+      });
     }
 
     setSubmitted(true);

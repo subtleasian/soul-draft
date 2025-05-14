@@ -1,72 +1,60 @@
-import React, { useState, useEffect } from "react";
-import Prompt from "./Prompt";
-import EntryForm from "./EntryForm";
+import React, { useState } from "react";
 import EntryList from "./EntryList";
-import { fetchPrompts } from "../utils/firestore";
+import PromptCategoryPicker from "./PromptCategoryPicker";
 import ConversationFlow from "./ConversationFlow";
 
 export default function Journal({ user }) {
-  const [activeTab, setActiveTab] = useState("prompt"); // "prompt" or "freeform"
-  const [prompts, setPrompts] = useState([]);
-  const [activePrompt, setActivePrompt] = useState(null);
-  const [entry, setEntry] = useState("");
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [dynamicTitle, setDynamicTitle] = useState("How would you like to begin?");
+  const [selectedCategory, setSelectedCategory] = useState(null);
 
-  useEffect(() => {
-    async function loadPrompts() {
-      const loaded = await fetchPrompts();
-      setPrompts(loaded);
-      setActivePrompt(loaded[0] || null);
-    }
-    loadPrompts();
-  }, []);
+  const promptCategories = [
+    { label: "🧠 Explore Something New", value: "exploration" },
+    { label: "🌞 Reflect on the Good", value: "positive" },
+    { label: "🖤 Process Hard Stuff", value: "deep_work" },
+    { label: "🧩 Challenge Your Thinking", value: "cognitive" },
+    { label: "🔎 Find Meaning in Patterns", value: "meta" },
+    { label: "🎲 Freeform / Surprise Me", value: "freeform" },
+    { label: "🔁 Revisit a Past Insight", value: "revisit" }
+  ];
+
+  const handleCategorySelect = (categoryValue) => {
+    const categoryObj = promptCategories.find(c => c.value === categoryValue);
+    setSelectedCategory(categoryObj);
+    setDynamicTitle(categoryObj?.label || "Reflect");
+  };
+
+  const handleResetToCategories = () => {
+  setSelectedCategory(null);
+  setDynamicTitle("How would you like to begin?");
+  };
 
   return (
     <div className="max-w-2xl mx-auto space-y-10 px-4">
-      {/* Tabs */}
-      <div className="flex justify-center space-x-4 border-b pb-4">
-        <button
-          onClick={() => setActiveTab("prompt")}
-          className={`px-4 py-2 rounded-full transition font-medium ${
-            activeTab === "prompt"
-              ? "bg-blue-600 text-white shadow"
-              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-          }`}
-        >
-          🧭 Guided Prompts
-        </button>
-        <button
-          onClick={() => setActiveTab("freeform")}
-          className={`px-4 py-2 rounded-full transition font-medium ${
-            activeTab === "freeform"
-              ? "bg-blue-600 text-white shadow"
-              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-          }`}
-        >
-          ✍️ Free Journal
-        </button>
-      </div>
-
-      {/* Input Section */}
       <section>
         <h2 className="text-xl font-semibold text-blue-800 mb-4">
-          {activeTab === "prompt" ? "Explore What’s Shaped You" : "Write Freely From Within"}
+          {dynamicTitle}
         </h2>
 
-        {activeTab === "prompt" && <ConversationFlow user={user} />}
-
-        {activeTab === "freeform" && (
-          <EntryForm user={user} entry={entry} setEntry={setEntry} />
+        {!selectedCategory ? (
+          <PromptCategoryPicker
+            categories={promptCategories}
+            onSelect={handleCategorySelect}
+          />
+        ) : (
+          <ConversationFlow
+            category={selectedCategory.value}
+            categoryLabel={selectedCategory.label}
+            user={user}
+            setDynamicTitle={setDynamicTitle} // 👈 pass down for deeper updates
+            onReset={handleResetToCategories} // 👈 new prop
+          />
         )}
       </section>
 
-      {/* Past Entries Section */}
       <section className="pt-6 border-t">
         <h3 className="text-lg font-semibold text-gray-700 mb-4">🧠 Your Identity Insights</h3>
         <EntryList user={user} />
       </section>
-
     </div>
   );
 }
